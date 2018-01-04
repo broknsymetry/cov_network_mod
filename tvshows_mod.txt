@@ -1,0 +1,7 @@
+from resources.lib.indexers import tvnetworksmod
+
+tvshows.get = tvnetworksmod.get
+tvshows.countries = tvnetworksmod.countries
+tvshows.networks = tvnetworksmod.networks
+tvshows.getNetworks = tvnetworksmod.getNetworks
+tvshows.tvmaze_list = tvnetworksmod.tvmaze_list
