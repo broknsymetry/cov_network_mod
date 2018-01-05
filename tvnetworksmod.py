@@ -320,18 +320,7 @@ def tvmaze_list(self, url):
                     itms = [re.findall('/(\d+)/', i) for i in itms]
                     itms = [i[0] for i in itms if len(i) > 0]
                     items.extend(itms)
-            #return
         except:
-            # try:
-                # result = client.request(url2)
-                # result = client.parseDOM(result, 'section', attrs = {'id': 'this-seasons-shows'})
-                # items = client.parseDOM(result, 'div', attrs = {'class': 'content auto cell'})
-                # items = [client.parseDOM(i, 'a', ret='href') for i in items]
-                # items = [i[0] for i in items if len(i) > 0]
-                # items = [re.findall('/(\d+)/', i) for i in items]
-                # items = [i[0] for i in items if len(i) > 0]
-                # items = items[:50]
-            # except:
             return
 
 
