@@ -1,5 +1,5 @@
 # cov_network_mod
-Add tvnetworksmod.py to the script.modules.covenant indexers folder.
+Add tvnetworksmod.py to the script.module.covenant indexers folder.
 Append tvshowsmod.txt to the existing tvshows.py file
 
 After modification, selection of TV Shows/Networks will display list of countries.
