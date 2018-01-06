@@ -31,7 +31,6 @@ from resources.lib.indexers import navigator
 
 import os,sys,re,json,urllib,urlparse,datetime,xbmcgui
 
-
 def get(self, url, idx=True, create_directory=True):
     try:
         try: url = getattr(self, url + '_link')
@@ -73,12 +72,12 @@ def get(self, url, idx=True, create_directory=True):
 
         elif u in self.tvmaze_link and '?Network' in url:
             self.list = cache.get(self.countries, 168, url)
-            if idx == True: self.getNetworks(url)
+            country_enum = urlparse.urlparse(url).query.split('&')[0].split('=')[1]
+            if idx == True: self.getNetworks(country_enum)
 
         elif u in self.tvmaze_link:
             self.list = cache.get(self.tvmaze_list, 0, url)#168
             if idx == True: self.worker()
-
 
         if idx == True and create_directory == True: self.tvshowDirectory(self.list)
         return self.list
@@ -163,12 +162,13 @@ def countries(self):
     ('United Arab Emirates', '233'),
     ('Venezuela', '240')]
 
-    self.tvmaze_networks_link = 'http://www.tvmaze.com/networks?Network[country_enum]=%s&Network[sort]=3'#, 'http://www.tvmaze.com/webchannels?WebChannel[country_enum]=%s&WebChannel[sort]=3']
+    self.tvmaze_networks_link = ['http://www.tvmaze.com/networks?Network[country_enum]=%s&Network[sort]=3', 'http://www.tvmaze.com/webchannels?WebChannel[country_enum]=%s&WebChannel[sort]=3']
+
     for i in countries:
         self.list.append(
         {
             'name': cleangenre.lang(i[0], self.lang),
-            'url': self.tvmaze_networks_link % i[1],
+            'url': self.tvmaze_networks_link[0] % i[1],
             'image': '',
             'action': 'tvshows'
         })
@@ -180,10 +180,13 @@ def networks(self):
     self.countries()
     return
 
-def getNetworks(self, url):
+def getNetworks(self, country_enum):
+    self.tvmaze_networks_link = ['http://www.tvmaze.com/networks?Network[country_enum]=%s&Network[sort]=3'% country_enum, 'http://www.tvmaze.com/webchannels?WebChannel[country_enum]=%s&WebChannel[sort]=3' % country_enum]
 
+    labels = ['[COLOR red][TV Networks][/COLOR]', '[COLOR red][Web Channels][/COLOR]']
+
+    l = 0
     self.list = []
-
     try:
         def maxpage(url):
             maxp = client.request(url + '&page=1000')
@@ -197,20 +200,23 @@ def getNetworks(self, url):
                 maxpage = int(maxp[0])
             return maxpage
 
-        mp = maxpage(url)
-        for p in range(1, mp+1):
-            network_page = client.request(url + '&page=' + str(p))
-            networks = client.parseDOM(network_page, 'div', attrs = {'class': 'card primary grid-x'})
-            for i in networks:
-                network = client.parseDOM(i, 'figure', attrs = {'class': 'image small-12 cell'})
-                title = client.parseDOM(i, 'span', attrs = {'class': 'title'})
-                title = client.parseDOM(title, 'a')
-                title = title[0].encode('utf-8')
-                u = client.parseDOM(network, 'a', ret='href')
-                u = u[0].encode('utf-8')
-                image = client.parseDOM(network, 'img', ret='src')
-                image = image[0].encode('utf-8')
-                self.list.append({'name': title, 'url': self.tvmaze_link + u, 'image': image, 'action': 'tvshows'})
+        for url in self.tvmaze_networks_link:
+            self.list.append({'name': labels[l], 'url': '', 'image': '', 'action': 'tvshows'})
+            mp = maxpage(url)
+            for p in range(1, mp+1):
+                network_page = client.request(url + '&page=' + str(p))
+                networks = client.parseDOM(network_page, 'div', attrs = {'class': 'card primary grid-x'})
+                for i in networks:
+                    network = client.parseDOM(i, 'figure', attrs = {'class': 'image small-12 cell'})
+                    title = client.parseDOM(i, 'span', attrs = {'class': 'title'})
+                    title = client.parseDOM(title, 'a')
+                    title = title[0].encode('utf-8')
+                    u = client.parseDOM(network, 'a', ret='href')
+                    u = u[0].encode('utf-8')
+                    image = client.parseDOM(network, 'img', ret='src')
+                    image = image[0].encode('utf-8')
+                    self.list.append({'name': title, 'url': self.tvmaze_link + u, 'image': image, 'action': 'tvshows'})
+            l+=1
 
     except:
         networks = [('A&E', '/networks/29/ae', 'https://i.imgur.com/xLDfHjH.png'),
@@ -284,7 +290,6 @@ def getNetworks(self, url):
 
 
 def tvmaze_list(self, url):
-    url2 = url
     items = []
 
     def maxpage(url):
@@ -303,9 +308,13 @@ def tvmaze_list(self, url):
             return 1
 
     def getShows(url, choice):
-        self.tvmaze_all_shows_link = 'http://www.tvmaze.com/shows?Show[network_id]=%s'#, 'http://www.tvmaze.com/webchannels?WebChannel[country_enum]=183&WebChannel[sort]=3']
+        network_id = urlparse.urlparse(url).path.split('/')[2]
+        self.tvmaze_all_shows_link = ['http://www.tvmaze.com/shows?Show[network_id]=%s' % network_id, 'http://www.tvmaze.com/shows?Show[webChannel_id]=%s&Show[sort]=3' % network_id]
+
         try:
-            if choice == 0: url = self.tvmaze_all_shows_link % urlparse.urlparse(url).path.split('/')[2]
+            if choice == 0: 
+                if 'network' in url: url = self.tvmaze_all_shows_link[0]
+                else: url = self.tvmaze_all_shows_link[1]
             for p in range(1, maxpage(url)+1):
                 result = client.request(url + '&page=' + str(p))
                 if choice == 0:
